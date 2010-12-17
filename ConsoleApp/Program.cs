@@ -5,6 +5,7 @@ using System.Text;
 using System.ServiceModel.Syndication;
 using System.Xml;
 using Cartel.Feeds;
+using System.Diagnostics;
 
 namespace ConsoleApp
 {
@@ -12,21 +13,13 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            XmlReader reader = XmlReader.Create("https://github.com/martindevans/Cartel/commits/master.atom");
-            SyndicationFeed feed = SyndicationFeed.Load(reader);
+            PeriodicRssAtom lastFmFeed = new PeriodicRssAtom(TimeSpan.FromSeconds(1), "http://ws.audioscrobbler.com/1.0/user/martindevans/recenttracks.rss");
+            lastFmFeed.Subscribe((a) => Console.WriteLine(a.Title.Text));
 
-            foreach (var item in feed.Items)
-            {
-                Console.WriteLine(item.Title.Text);
-            }
+            lastFmFeed.Start();
 
-            PeriodicRssAtom feed2 = new PeriodicRssAtom(TimeSpan.FromSeconds(30), "http://ws.audioscrobbler.com/1.0/user/martindevans/recenttracks.rss");
-            feed2.Subscribe((a) => Console.WriteLine(a.Title.Text));
-
-            feed2.Start();
-
-            Console.WriteLine("Done");
-            Console.ReadLine();
+            Console.WriteLine("Done, press any key to exit");
+            Console.ReadKey();
         }
     }
 }

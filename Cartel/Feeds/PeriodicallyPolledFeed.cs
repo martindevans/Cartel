@@ -36,20 +36,20 @@ namespace Cartel.Feeds
 
             timer = new Timer((a) => 
             {
-                try
+                lock (timer)
                 {
-                    if (Interlocked.Read(ref started) == TRUE)
+                    try
                     {
-                        Poll(lastUpdated);
-                        lastUpdated = DateTime.Now;
+                        if (Interlocked.Read(ref started) == TRUE)
+                        {
+                            Poll(lastUpdated);
+                            lastUpdated = DateTime.Now;
+                        }
                     }
-                    
-                    if (Interlocked.Read(ref started) == TRUE)
-                        Start();
-                }
-                catch (Exception e)
-                {
-                    PushError(e);
+                    catch (Exception e)
+                    {
+                        PushError(e);
+                    }
                 }
             });
         }
@@ -59,7 +59,7 @@ namespace Cartel.Feeds
             Interlocked.Exchange(ref started, TRUE);
 
             long p = Interlocked.Read(ref period);
-            timer.Change(0, p);
+            timer.Change(TimeSpan.FromTicks(0), TimeSpan.FromTicks(p));
 
             return this;
         }
