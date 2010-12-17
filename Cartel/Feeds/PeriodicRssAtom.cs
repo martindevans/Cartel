@@ -12,39 +12,32 @@ namespace Cartel.Feeds
     {
         public readonly string Uri;
 
-        private XmlReader reader;
-
         public PeriodicRssAtom(TimeSpan period, string uri)
             :base(period)
         {
             Uri = uri;
-
-            XmlReaderSettings settings = new XmlReaderSettings()
-            {
-                IgnoreComments = true,
-            };
-            reader = XmlReader.Create(uri, settings);
         }
 
-        protected override void Poll()
+        protected override void Poll(DateTime lastUpdated)
         {
+            var reader = XmlReader.Create(Uri);
             SyndicationFeed feed = SyndicationFeed.Load(reader);
-            foreach (var item in feed.Items)
-            {
-                try
-                {
-                    PushNext(ToEntry(item));
-                }
-                catch (Exception e)
-                {
-                    PushError(e);
-                }
-            }
-        }
 
-        private Feed.Entry ToEntry(SyndicationItem item)
-        {
-            throw new NotImplementedException();
+            if (feed.LastUpdatedTime > lastUpdated)
+            {
+                foreach (var item in feed.Items)
+                {
+                    try
+                    {
+                        PushNext(item);
+                    }
+                    catch (Exception e)
+                    {
+                        PushError(e);
+                    }
+                }
+                lastUpdated = DateTime.Now;
+            }
         }
     }
 }

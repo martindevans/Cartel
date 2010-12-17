@@ -9,10 +9,10 @@ using System.ServiceModel.Syndication;
 
 namespace Cartel.Feeds
 {
-    public abstract class Feed : IObservable<Feed.Entry>
+    public abstract class Feed : IObservable<SyndicationItem>
     {
         #region fields
-        private ConcurrentDictionary<Subscription, IObserver<Entry>> observers = new ConcurrentDictionary<Subscription, IObserver<Entry>>();
+        private ConcurrentDictionary<Subscription, IObserver<SyndicationItem>> observers = new ConcurrentDictionary<Subscription, IObserver<SyndicationItem>>();
 
         public int Observers
         {
@@ -29,10 +29,10 @@ namespace Cartel.Feeds
         }
 
         #region push
-        protected void PushNext(Entry entry)
+        protected void PushNext(SyndicationItem SyndicationItem)
         {
             foreach (var o in observers.Values.AsParallel())
-                o.OnNext(entry);
+                o.OnNext(SyndicationItem);
         }
 
         protected void PushCompleted()
@@ -49,17 +49,17 @@ namespace Cartel.Feeds
         #endregion
 
         #region subscribe
-        public IDisposable Subscribe(IObserver<Entry> observer)
+        public IDisposable Subscribe(IObserver<SyndicationItem> observer)
         {
             return new Subscription(observer, observers);
         }
 
         private class Subscription : IDisposable
         {
-            ConcurrentDictionary<Subscription, IObserver<Entry>> set;
-            IObserver<Entry> observer;
+            ConcurrentDictionary<Subscription, IObserver<SyndicationItem>> set;
+            IObserver<SyndicationItem> observer;
 
-            public Subscription(IObserver<Entry> observer, ConcurrentDictionary<Subscription, IObserver<Entry>> set)
+            public Subscription(IObserver<SyndicationItem> observer, ConcurrentDictionary<Subscription, IObserver<SyndicationItem>> set)
             {
                 this.set = set;
                 if (!set.TryAdd(this, observer))
@@ -68,16 +68,10 @@ namespace Cartel.Feeds
 
             public void Dispose()
             {
-                IObserver<Entry> o;
+                IObserver<SyndicationItem> o;
                 set.TryRemove(this, out o);
             }
         }
         #endregion
-
-        public class Entry
-            :DynamicObject
-        {
-
-        }
     }
 }

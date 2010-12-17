@@ -9,6 +9,8 @@ namespace Cartel.Feeds
     public abstract class PeriodicallyPolledFeed
         :Feed
     {
+        DateTime lastUpdated = DateTime.MinValue;
+
         private long period = TimeSpan.FromMinutes(1).Ticks;
         public TimeSpan Period
         {
@@ -37,7 +39,13 @@ namespace Cartel.Feeds
                 try
                 {
                     if (Interlocked.Read(ref started) == TRUE)
-                        Poll();
+                    {
+                        Poll(lastUpdated);
+                        lastUpdated = DateTime.Now;
+                    }
+                    
+                    if (Interlocked.Read(ref started) == TRUE)
+                        Start();
                 }
                 catch (Exception e)
                 {
@@ -65,6 +73,6 @@ namespace Cartel.Feeds
             return this;
         }
 
-        protected abstract void Poll();
+        protected abstract void Poll(DateTime lastUpdated);
     }
 }

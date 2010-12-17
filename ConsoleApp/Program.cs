@@ -20,7 +20,8 @@ namespace ConsoleApp
                 Console.WriteLine(item.Title.Text);
             }
 
-            PeriodicRssAtom feed2 = new PeriodicRssAtom(TimeSpan.FromMinutes(1), "https://github.com/martindevans/Cartel/commits/master.atom");
+            PeriodicRssAtom feed2 = new PeriodicRssAtom(TimeSpan.FromSeconds(30), "http://ws.audioscrobbler.com/1.0/user/martindevans/recenttracks.rss");
+            feed2.Subscribe((a) => Console.WriteLine(a.Title.Text));
 
             feed2.Start();
 
