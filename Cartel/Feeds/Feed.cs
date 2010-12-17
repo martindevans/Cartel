@@ -9,10 +9,14 @@ using System.ServiceModel.Syndication;
 
 namespace Cartel.Feeds
 {
-    public abstract class Feed : IObservable<SyndicationItem>
+    /// <summary>
+    /// An observable feed of data
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public abstract class Feed<T> : IObservable<T>
     {
         #region fields
-        private ConcurrentDictionary<Subscription, IObserver<SyndicationItem>> observers = new ConcurrentDictionary<Subscription, IObserver<SyndicationItem>>();
+        private ConcurrentDictionary<Subscription, IObserver<T>> observers = new ConcurrentDictionary<Subscription, IObserver<T>>();
 
         public int Observers
         {
@@ -29,10 +33,10 @@ namespace Cartel.Feeds
         }
 
         #region push
-        protected void PushNext(SyndicationItem SyndicationItem)
+        protected void PushNext(T item)
         {
             foreach (var o in observers.Values.AsParallel())
-                o.OnNext(SyndicationItem);
+                o.OnNext(item);
         }
 
         protected void PushCompleted()
@@ -49,17 +53,17 @@ namespace Cartel.Feeds
         #endregion
 
         #region subscribe
-        public IDisposable Subscribe(IObserver<SyndicationItem> observer)
+        public IDisposable Subscribe(IObserver<T> observer)
         {
             return new Subscription(observer, observers);
         }
 
         private class Subscription : IDisposable
         {
-            ConcurrentDictionary<Subscription, IObserver<SyndicationItem>> set;
-            IObserver<SyndicationItem> observer;
+            ConcurrentDictionary<Subscription, IObserver<T>> set;
+            IObserver<T> observer;
 
-            public Subscription(IObserver<SyndicationItem> observer, ConcurrentDictionary<Subscription, IObserver<SyndicationItem>> set)
+            public Subscription(IObserver<T> observer, ConcurrentDictionary<Subscription, IObserver<T>> set)
             {
                 this.set = set;
                 if (!set.TryAdd(this, observer))
@@ -68,7 +72,7 @@ namespace Cartel.Feeds
 
             public void Dispose()
             {
-                IObserver<SyndicationItem> o;
+                IObserver<T> o;
                 set.TryRemove(this, out o);
             }
         }

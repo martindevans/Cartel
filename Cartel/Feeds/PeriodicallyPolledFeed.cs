@@ -6,8 +6,12 @@ using System.Threading;
 
 namespace Cartel.Feeds
 {
-    public abstract class PeriodicallyPolledFeed
-        :Feed
+    /// <summary>
+    /// A data feed which is periodically polled to check for new data
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public abstract class PeriodicallyPolledFeed<T>
+        :Feed<T>
     {
         DateTime lastUpdated = DateTime.MinValue;
 
@@ -54,7 +58,7 @@ namespace Cartel.Feeds
             });
         }
 
-        public PeriodicallyPolledFeed Start()
+        public PeriodicallyPolledFeed<T> Start()
         {
             Interlocked.Exchange(ref started, TRUE);
 
@@ -64,7 +68,7 @@ namespace Cartel.Feeds
             return this;
         }
 
-        public PeriodicallyPolledFeed Pause()
+        public PeriodicallyPolledFeed<T> Pause()
         {
             Interlocked.Exchange(ref started, FALSE);
 

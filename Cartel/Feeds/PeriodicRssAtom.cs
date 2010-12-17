@@ -8,7 +8,7 @@ using System.Xml;
 namespace Cartel.Feeds
 {
     public class PeriodicRssAtom
-        :PeriodicallyPolledFeed
+        :PeriodicallyPolledFeed<SyndicationItem>
     {
         public readonly string Uri;
 
