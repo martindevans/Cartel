@@ -34,24 +34,35 @@ namespace Cartel.Feeds
 
             timer = new Timer((a) => 
             {
-                if (Interlocked.Read(ref started) == TRUE)
-                    Poll();
+                try
+                {
+                    if (Interlocked.Read(ref started) == TRUE)
+                        Poll();
+                }
+                catch (Exception e)
+                {
+                    PushError(e);
+                }
             });
         }
 
-        public void Start()
+        public PeriodicallyPolledFeed Start()
         {
             Interlocked.Exchange(ref started, TRUE);
 
             long p = Interlocked.Read(ref period);
             timer.Change(0, p);
+
+            return this;
         }
 
-        public void Pause()
+        public PeriodicallyPolledFeed Pause()
         {
             Interlocked.Exchange(ref started, FALSE);
 
             timer.Change(Timeout.Infinite, Timeout.Infinite);
+
+            return this;
         }
 
         protected abstract void Poll();

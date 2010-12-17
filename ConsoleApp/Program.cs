@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.ServiceModel.Syndication;
 using System.Xml;
+using Cartel.Feeds;
 
 namespace ConsoleApp
 {
@@ -11,8 +12,7 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            XmlReader reader = XmlReader.Create("http://pipes.yahoo.com/pipes/pipe.run?_id=81d29ca6281bbffdae866bf3aed05203&_render=rss");
-
+            XmlReader reader = XmlReader.Create("https://github.com/martindevans/Cartel/commits/master.atom");
             SyndicationFeed feed = SyndicationFeed.Load(reader);
 
             foreach (var item in feed.Items)
@@ -20,6 +20,11 @@ namespace ConsoleApp
                 Console.WriteLine(item.Title.Text);
             }
 
+            PeriodicRssAtom feed2 = new PeriodicRssAtom(TimeSpan.FromMinutes(1), "https://github.com/martindevans/Cartel/commits/master.atom");
+
+            feed2.Start();
+
+            Console.WriteLine("Done");
             Console.ReadLine();
         }
     }

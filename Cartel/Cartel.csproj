@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="Feeds\Feed.cs" />
     <Compile Include="Feeds\PeriodicallyPolledFeed.cs" />
+    <Compile Include="Feeds\PeriodicRssAtom.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
