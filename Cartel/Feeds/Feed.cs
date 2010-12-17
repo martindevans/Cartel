@@ -5,22 +5,31 @@ using System.Dynamic;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.ServiceModel.Syndication;
 
-namespace Cartel
+namespace Cartel.Feeds
 {
-    public abstract class Feed : IObservable<FeedEntry>
+    public abstract class Feed : IObservable<Feed.Entry>
     {
-        private ConcurrentDictionary<Subscription, IObserver<FeedEntry>> observers = new ConcurrentDictionary<Subscription, IObserver<FeedEntry>>();
+        #region fields
+        private ConcurrentDictionary<Subscription, IObserver<Entry>> observers = new ConcurrentDictionary<Subscription, IObserver<Entry>>();
 
-        public int ObserversCount
+        public int Observers
         {
             get
             {
                 return observers.Count;
             }
         }
+        #endregion
 
-        protected void PushNext(FeedEntry entry)
+        public Feed()
+        {
+
+        }
+
+        #region push
+        protected void PushNext(Entry entry)
         {
             foreach (var o in observers.Values.AsParallel())
                 o.OnNext(entry);
@@ -37,18 +46,20 @@ namespace Cartel
             foreach (var o in observers.Values.AsParallel())
                 o.OnError(error);
         }
+        #endregion
 
-        public IDisposable Subscribe(IObserver<FeedEntry> observer)
+        #region subscribe
+        public IDisposable Subscribe(IObserver<Entry> observer)
         {
             return new Subscription(observer, observers);
         }
 
         private class Subscription : IDisposable
         {
-            ConcurrentDictionary<Subscription, IObserver<FeedEntry>> set;
-            IObserver<FeedEntry> observer;
+            ConcurrentDictionary<Subscription, IObserver<Entry>> set;
+            IObserver<Entry> observer;
 
-            public Subscription(IObserver<FeedEntry> observer, ConcurrentDictionary<Subscription, IObserver<FeedEntry>> set)
+            public Subscription(IObserver<Entry> observer, ConcurrentDictionary<Subscription, IObserver<Entry>> set)
             {
                 this.set = set;
                 if (!set.TryAdd(this, observer))
@@ -57,9 +68,16 @@ namespace Cartel
 
             public void Dispose()
             {
-                IObserver<FeedEntry> o;
+                IObserver<Entry> o;
                 set.TryRemove(this, out o);
             }
+        }
+        #endregion
+
+        public class Entry
+            :DynamicObject
+        {
+
         }
     }
 }
