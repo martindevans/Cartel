@@ -12,18 +12,24 @@ namespace Cartel.Feeds
     {
         public readonly string Uri;
 
+        private DateTime latestItemWithDatestamp = DateTime.MinValue;
+        private HashSet<Guid> receivedNonDatestampedItems = new HashSet<Guid>();
+
         public PeriodicRssAtom(TimeSpan period, string uri)
             :base(period)
         {
             Uri = uri;
         }
 
+
+
         protected override void Poll(DateTime lastUpdated)
         {
             var reader = XmlReader.Create(Uri);
+
             SyndicationFeed feed = SyndicationFeed.Load(reader);
 
-            if (feed.LastUpdatedTime > lastUpdated)
+            //if (feed.LastUpdatedTime > lastUpdated && feed.LastUpdatedTime.DateTime != default(DateTime))
             {
                 foreach (var item in feed.Items)
                 {
@@ -36,7 +42,7 @@ namespace Cartel.Feeds
                         PushError(e);
                     }
                 }
-                lastUpdated = DateTime.Now;
+                lastUpdated = feed.LastUpdatedTime.DateTime;
             }
         }
     }
