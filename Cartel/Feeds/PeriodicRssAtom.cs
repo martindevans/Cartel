@@ -15,13 +15,15 @@ namespace Cartel.Feeds
         private DateTime latestItemWithDatestamp = DateTime.MinValue;
         private HashSet<Guid> receivedNonDatestampedItems = new HashSet<Guid>();
 
+        public bool ForceUpdate { get; set; }
+
+        public bool RespectTtl { get; set; }
+
         public PeriodicRssAtom(TimeSpan period, string uri)
             :base(period)
         {
             Uri = uri;
         }
-
-
 
         protected override void Poll(DateTime lastUpdated)
         {
@@ -29,7 +31,25 @@ namespace Cartel.Feeds
 
             SyndicationFeed feed = SyndicationFeed.Load(reader);
 
-            //if (feed.LastUpdatedTime > lastUpdated && feed.LastUpdatedTime.DateTime != default(DateTime))
+            TimeSpan? setTtl = null;
+            if (RespectTtl)
+            {
+                var ttl = feed.ElementExtensions.Where(a => a.OuterName == "ttl");
+                if (ttl.Count() != 0)
+                {
+                    var r = ttl.First().GetReader();
+                    string s = r.ReadElementString();
+                    try
+                    {
+                        TimeSpan time = TimeSpan.FromMinutes(Int32.Parse(s));
+                        setTtl = time;
+                    }
+                    catch (XmlException x) { /* swallow and igonore ttl */ }
+                    catch (FormatException f) { /* swallow and igonore ttl */ }
+                }
+            }
+
+            if (ForceUpdate || feed.LastUpdatedTime > lastUpdated || feed.LastUpdatedTime.DateTime == default(DateTime))
             {
                 foreach (var item in feed.Items)
                 {
@@ -43,6 +63,13 @@ namespace Cartel.Feeds
                     }
                 }
                 lastUpdated = feed.LastUpdatedTime.DateTime;
+            }
+
+            if (setTtl.HasValue)
+            {
+                Period = setTtl.Value;
+                Pause();
+                Start();
             }
         }
     }
