@@ -34,6 +34,10 @@ namespace Cartel.Feeds
 
         private Timer timer;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PeriodicallyPolledFeed&lt;T&gt;"/> class.
+        /// </summary>
+        /// <param name="period">The period.</param>
         public PeriodicallyPolledFeed(TimeSpan period)
         {
             Period = period;
@@ -58,6 +62,10 @@ namespace Cartel.Feeds
             });
         }
 
+        /// <summary>
+        /// Start polling
+        /// </summary>
+        /// <returns>this feed</returns>
         public PeriodicallyPolledFeed<T> Start()
         {
             Interlocked.Exchange(ref started, TRUE);
@@ -68,12 +76,27 @@ namespace Cartel.Feeds
             return this;
         }
 
+        /// <summary>
+        /// Pause polling
+        /// </summary>
+        /// <returns>this feed</returns>
         public PeriodicallyPolledFeed<T> Pause()
         {
             Interlocked.Exchange(ref started, FALSE);
 
             timer.Change(Timeout.Infinite, Timeout.Infinite);
 
+            return this;
+        }
+
+        /// <summary>
+        /// Send a completed messages to observers
+        /// </summary>
+        /// <returns>this feed</returns>
+        public PeriodicallyPolledFeed<T> Stop()
+        {
+            Pause();
+            PushCompleted();
             return this;
         }
 
