@@ -4,35 +4,36 @@ using System.Linq;
 using System.Text;
 using System.ServiceModel.Syndication;
 using System.Xml;
+using System.Diagnostics;
 
 namespace Cartel.Feeds
 {
-    public class PeriodicRssAtom
-        :PeriodicallyPolledFeed<SyndicationItem>
+    public class PolledRssAtom
+        :PolledFeed<SyndicationItem>
     {
         public readonly string Uri;
 
         private DateTime latestItemWithDatestamp = DateTime.MinValue;
         private HashSet<Guid> receivedNonDatestampedItems = new HashSet<Guid>();
 
+        DateTime lastPolled = DateTime.MinValue;
+
         public bool ForceUpdate { get; set; }
 
-        public bool RespectTtl { get; set; }
-
-        public PeriodicRssAtom(TimeSpan period, string uri)
-            :base(period)
+        public PolledRssAtom(string uri)
+            :base()
         {
             Uri = uri;
         }
 
-        protected override void Poll(DateTime lastUpdated)
+        public override void Poll()
         {
             var reader = XmlReader.Create(Uri);
 
             SyndicationFeed feed = SyndicationFeed.Load(reader);
 
             TimeSpan? setTtl = null;
-            if (RespectTtl)
+            if (ParseTtl)
             {
                 var ttl = feed.ElementExtensions.Where(a => a.OuterName == "ttl");
                 if (ttl.Count() != 0)
@@ -42,14 +43,14 @@ namespace Cartel.Feeds
                     try
                     {
                         TimeSpan time = TimeSpan.FromMinutes(Int32.Parse(s));
-                        setTtl = time;
+                        NewTtl(time);
                     }
-                    catch (XmlException x) { /* swallow and igonore ttl */ }
-                    catch (FormatException f) { /* swallow and igonore ttl */ }
+                    catch (XmlException x) { Trace.TraceWarning(x.ToString()); }
+                    catch (FormatException f) { Trace.TraceWarning(f.ToString()); }
                 }
             }
 
-            if (ForceUpdate || feed.LastUpdatedTime > lastUpdated || feed.LastUpdatedTime.DateTime == default(DateTime))
+            if (ForceUpdate || feed.LastUpdatedTime > lastPolled || feed.LastUpdatedTime.DateTime == default(DateTime))
             {
                 foreach (var item in feed.Items)
                 {
@@ -62,15 +63,9 @@ namespace Cartel.Feeds
                         PushError(e);
                     }
                 }
-                lastUpdated = feed.LastUpdatedTime.DateTime;
             }
 
-            if (setTtl.HasValue)
-            {
-                Period = setTtl.Value;
-                Pause();
-                Start();
-            }
+            lastPolled = DateTime.Now;
         }
     }
 }

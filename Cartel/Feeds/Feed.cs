@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Dynamic;
-using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.ServiceModel.Syndication;
@@ -33,19 +31,19 @@ namespace Cartel.Feeds
         }
 
         #region push
-        protected void PushNext(T item)
+        public void PushNext(T item)
         {
             foreach (var o in observers.Values.AsParallel())
                 o.OnNext(item);
         }
 
-        protected void PushCompleted()
+        public void PushCompleted()
         {
             foreach (var o in observers.Values.AsParallel())
                 o.OnCompleted();
         }
 
-        protected void PushError(Exception error)
+        public void PushError(Exception error)
         {
             foreach (var o in observers.Values.AsParallel())
                 o.OnError(error);
@@ -53,7 +51,7 @@ namespace Cartel.Feeds
         #endregion
 
         #region subscribe
-        public IDisposable Subscribe(IObserver<T> observer)
+        public virtual IDisposable Subscribe(IObserver<T> observer)
         {
             return new Subscription(observer, observers);
         }

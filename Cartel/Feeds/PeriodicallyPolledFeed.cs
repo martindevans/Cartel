@@ -10,8 +10,8 @@ namespace Cartel.Feeds
     /// A data feed which is periodically polled to check for new data
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class PeriodicallyPolledFeed<T>
-        :Feed<T>
+    public class PeriodicallyPolledFeed<T>
+        :IObservable<T>
     {
         DateTime lastUpdated = DateTime.MinValue;
 
@@ -34,13 +34,17 @@ namespace Cartel.Feeds
 
         private Timer timer;
 
+        private PolledFeed<T> feed;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PeriodicallyPolledFeed&lt;T&gt;"/> class.
         /// </summary>
         /// <param name="period">The period.</param>
-        public PeriodicallyPolledFeed(TimeSpan period)
+        public PeriodicallyPolledFeed(TimeSpan period, PolledFeed<T> feed)
         {
             Period = period;
+
+            this.feed = feed;
 
             timer = new Timer((a) => 
             {
@@ -50,16 +54,16 @@ namespace Cartel.Feeds
                     {
                         if (Interlocked.Read(ref started) == TRUE)
                         {
-                            Poll(lastUpdated);
+                            feed.Poll();
                             lastUpdated = DateTime.Now;
                         }
                     }
                     catch (Exception e)
                     {
-                        PushError(e);
+                        feed.PushError(e);
                     }
                 }
-            });
+            }, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
         }
 
         /// <summary>
@@ -96,10 +100,13 @@ namespace Cartel.Feeds
         public PeriodicallyPolledFeed<T> Stop()
         {
             Pause();
-            PushCompleted();
+            feed.PushCompleted();
             return this;
         }
 
-        protected abstract void Poll(DateTime lastUpdated);
+        IDisposable IObservable<T>.Subscribe(IObserver<T> observer)
+        {
+            return feed.Subscribe(observer);
+        }
     }
 }

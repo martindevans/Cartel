@@ -45,5 +45,22 @@ namespace Cartel.Extensions
                     return !r;
                 });
         }
+
+        /// <summary>
+        /// Buffers the observable, and returns the buffer in order
+        /// </summary>
+        /// <typeparam name="TSource">The type of the source.</typeparam>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <param name="observable">The observable.</param>
+        /// <param name="keySelector">The key selector.</param>
+        /// <param name="bufferTime">The buffer time.</param>
+        /// <returns></returns>
+        public static IObservable<TSource> OrderBy<TSource, TKey>(this IObservable<TSource> observable, Func<TSource, TKey> keySelector, TimeSpan bufferTime) where TKey : IComparable<TKey>
+        {
+            return observable
+                .BufferWithTime(TimeSpan.FromSeconds(10))
+                .Select(a => a.OrderBy(keySelector))
+                .SelectMany(a => a);
+        }
     }
 }
